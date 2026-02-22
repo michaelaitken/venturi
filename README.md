@@ -2,61 +2,56 @@
 
 # Venturi
 
-### High-Performance, LAN-First Media Server
+### A C++20 & Boost.Asio Networking Sandbox
 
-![Status](https://img.shields.io/badge/Status-Active_Development-orange?style=for-the-badge)
+![Status](https://img.shields.io/badge/Status-WIP-orange?style=for-the-badge)
 ![Language](https://img.shields.io/badge/C++-20-blue?style=for-the-badge&logo=c%2B%2B)
 
-*An opinionated, C++20 media server experiment exploring the limits of direct-play performance and library normalization.*
+*An engineering sandbox exploring asynchronous network I/O, modern C++ memory models, and custom HTTP server implementation via a LAN-first media server.*
 
 </div>
 
-## 📖 The Core Concept
+## Context
 
-Existing media servers (Plex, Jellyfin) are Swiss Army Knives. They try to support every client, network condition, and media type, often relying on aggressive on-the-fly transcoding.
+The goal of Venturi is to provide a dedicated environment to deepen my understanding of low-level systems programming using modern C++. Building a multi-threaded HTTP server using `Boost.Asio/Beast` forces a hands-on approach to concurrency, TCP socket management, parsing network headers, and handling modern C++ lifetimes in asynchronous callbacks.
 
-**Venturi is different.** It's built on three specific principles:
+> **Status:** This project is a **Work in Progress / Educational Sandbox**. It is not polished for production use. The core streaming pipeline works, but expect rough edges and architectural refactors as I use this to test and explore new C++ paradigms.
+>
+> *Update (Feb 2026): Active development is currently paused as I prepare for my relocation to Austin, TX in April. I will resume explorations once settled.*
 
-1. **Direct Play is the Norm:** 99% of playback should be "Disk → Socket" with zero transcoding.
-2. **Normalize Up Front:** Instead of burning CPU to transcode during playback, Venturi analyzes and, if requested, optimizes media *before* you press play.
-3. **Tight Scope:** Its focused purely on Movies/TV over LAN. No photos, no books, no WAN complexity.
+## Technical Constraints & Architecture
 
-> **⚠️ Status:** This project is currently in **Early Active Development**. The core streaming pipeline works, but expect rough edges and architectural refactors.
-
-## ⚡ Technical Philosophy
+To focus on the networking and backend architecture, I established strict constraints for this project:
 
 ### 1. The "Boring File" Strategy
 
-Venturi aims to make your library "boring." A background job system analyzes incoming media for exotic codecs or high bitrates. It then proposes actions (Optimize or Replace) to convert files into standard, streaming-friendly formats.
-
-**Result:** The hot path remains incredibly lean, reducing runtime CPU/GPU load.
+Rather than dealing with on-the-fly transcoding (which masks networking performance bottlenecks behind CPU/GPU bottlenecks), Venturi aims to make the library "boring." A background job system would propose actions to normalize media into streaming-friendly formats. As a result, the hot path remains incredibly lean, allowing me to focus strictly on "Disk to Socket" throughput.
 
 ### 2. LAN-First/Only
 
-Venturi is designed for the modern home network. By prioritizing LAN streaming, we can strip away WAN-specific overhead. This allows us to focus on local performance metrics like **Time-to-First-Frame (TTFF)** and assume high network performance.
+By stripping away WAN-specific overhead and assuming high network performance, I can focus entirely on local performance metrics like Time-to-First-Frame (TTFF) and raw I/O efficiency, without worrying about protocol encryption.
 
-### 3. Native C++ Architecture
+### 3. Native C++ & Asynchronous I/O
 
-Built on **C++20** and **Boost.Asio/Beast**, the HTTP stack is fully asynchronous. The goal is a pipeline where server overhead is negligible compared to the media throughput.
+Built entirely on **C++20** and **Boost.Asio/Beast**. The HTTP stack is fully asynchronous, providing me with a playground to explore and manage thread pools, `io_context` lifecycles, and non-blocking I/O.
 
-## 🗺️ Roadmap & Current Status
+## What I've Learnt & Current Status
 
-### Implemented Features
+### Implemented So Far
 
-- [x] **Async HTTP Server:** Non-blocking I/O using Boost.Beast.
+- [x] **Async HTTP Server:** Non-blocking I/O and session management using Boost.Beast.
 - [x] **Filesystem Scanning:** Recursive directory traversal and basic container identification.
 - [x] **Direct Play:** Basic streaming for compatible MP4/MKV containers.
 
-### Known Limitations (Active Engineering)
+### Active Development & Known Limitations
 
-- **Byte-Range Seeking Bug:** The current `Boost.Beast` file body implementation eagerly sends data to EOF, disregarding precise range headers.
-- **Refactor In-Progress:** Moving from runtime polymorphism (virtual functions) to static polymorphism (Concepts/Templates).
+- **Boost Beast Byte-Range Seeking:** The current `Boost.Beast` file body implementation sends data to EOF, ignoring the end of range requests. I am currently looking into solutions, like a custom file body to properly respect precise HTTP `Range` headers, which is needed for video seeking and scrubbing over the network.
 
-### Upcoming
+- **C++20 Polymorphism:** I am actively refactoring the architecture to move away from runtime polymorphism (virtual functions/v-tables) toward static polymorphism (C++20 Concepts and Templates) to reduce runtime overhead on the hot path.
 
-- [ ] **FFmpeg Integration:** Background job scheduler for media analysis and normalization.
-- [ ] **Dashboard:** Web UI for visualizing media library and performance metrics.
+### Future Explorations
 
+- [ ] **FFmpeg Integration:** Building a background job scheduler for media analysis and pre-normalization.
 
 ## 🛠️ Build & Run
 
@@ -89,8 +84,5 @@ Built on **C++20** and **Boost.Asio/Beast**, the HTTP stack is fully asynchronou
     ```
 
     *Starts server on port 8080.*
----
 
-<div align="center">
-  <i>Built with ❤️ and C++</i>
-</div>
+---
